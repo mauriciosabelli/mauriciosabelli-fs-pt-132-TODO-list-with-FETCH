@@ -1,33 +1,69 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
+
+const USERNAME = "mausabe";
+const BASE_URL = "https://playground.4geeks.com/todo";
 
 const Home = () => {
     const [input, setInput] = useState("");
     const [todoList, setTodoList] = useState([]);
     const [hoveredIndex, setHoveredIndex] = useState(null);
 
-    const handleDelete = (index) => {
-        const nuevaLista = todoList.filter((_, i) => i !== index);
-        setTodoList(nuevaLista);
+    // 1. Crear usuario y cargar tareas al iniciar
+    useEffect(() => {
+        fetch(`${BASE_URL}/users/${USERNAME}`, { method: "POST" })
+            .then(() => fetchTodos())
+            .catch(error => console.log(error));
+    }, []);
+
+    const fetchTodos = () => {
+            fetch(`${BASE_URL}/todos/${USERNAME}`)
+            fetch(`${BASE_URL}/users/${USERNAME}`)
+            .then(resp => resp.json())
+            .then(data => setTodoList(data.todos || []))
+            .catch(error => console.log(error));
     };
 
     const handleChange = (event) => {
         setInput(event.target.value);
     };
 
+    // 2. Agregar tarea
     const handleKeyDown = (e) => {
         if (e.key === "Enter") {
             if (input.trim() !== "") {
-                setTodoList([...todoList, input]);
-                setInput("");
+                fetch(`${BASE_URL}/todos/${USERNAME}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ label: input, is_done: false })
+                })
+                    .then(resp => resp.json())
+                    .then(() => {
+                        setInput("");
+                        fetchTodos();
+                    })
+                    .catch(error => console.log(error));
             } else {
                 alert("El campo no puede estar vacío");
             }
         }
     };
 
-    
+    // 3. Eliminar una tarea
+    const handleDelete = (id) => {
+        fetch(`${BASE_URL}/todos/${id}`, { method: "DELETE" })
+            .then(() => fetchTodos())
+            .catch(error => console.log(error));
+    };
+
+    // 4. Limpiar todas las tareas
+    const handleClearAll = () => {
+        fetch(`${BASE_URL}/users/${USERNAME}`, { method: "DELETE" })
+            .then(() => fetch(`${BASE_URL}/users/${USERNAME}`, { method: "POST" }))
+            .then(() => fetchTodos())
+            .catch(error => console.log(error));
+    };
 
     return (
         <div className="container-fluid row m-0 p-0">
@@ -53,13 +89,13 @@ const Home = () => {
                         todoList.map((todo, i) => (
                             <li
                                 className="list-group-item d-flex justify-content-between align-items-center shadow-sm"
-                                key={i}
+                                key={todo.id}
                                 onMouseEnter={() => setHoveredIndex(i)}
                                 onMouseLeave={() => setHoveredIndex(null)}
                             >
-                                {todo}
+                                {todo.label}
                                 <div className="d-flex gap-1" style={{ visibility: hoveredIndex === i ? "visible" : "hidden" }}>
-                                    <button onClick={() => handleDelete(i)} className="delete">
+                                    <button onClick={() => handleDelete(todo.id)} className="delete">
                                         X
                                     </button>
                                 </div>
@@ -67,11 +103,16 @@ const Home = () => {
                         ))
                     )}
                 </ul>
-                
+
                 {todoList.length > 0 && (
-                    <p className="text-muted text-start m-3">
-                {todoList.length === 1 ? "1 tarea pendiente" : `${todoList.length} tareas pendientes`}
-                    </p>
+                    <div className="d-flex justify-content-between align-items-center m-3">
+                        <p className="text-muted m-0">
+                            {todoList.length === 1 ? "1 tarea pendiente" : `${todoList.length} tareas pendientes`}
+                        </p>
+                        <button onClick={handleClearAll} className="btn btn-outline-danger btn-sm">
+                            Limpiar todo
+                        </button>
+                    </div>
                 )}
             </div>
         </div>
