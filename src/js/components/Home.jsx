@@ -10,7 +10,7 @@ const Home = () => {
     const [todoList, setTodoList] = useState([]);
     const [hoveredIndex, setHoveredIndex] = useState(null);
 
-    // 1. Crear usuario y cargar tareas al iniciar
+
     useEffect(() => {
         fetch(`${BASE_URL}/users/${USERNAME}`, { method: "POST" })
             .then(() => fetchTodos())
@@ -29,7 +29,7 @@ const Home = () => {
         setInput(event.target.value);
     };
 
-    // 2. Agregar tarea
+    
     const handleKeyDown = (e) => {
         if (e.key === "Enter") {
             if (input.trim() !== "") {
@@ -50,14 +50,14 @@ const Home = () => {
         }
     };
 
-    // 3. Eliminar una tarea
+   
     const handleDelete = (id) => {
         fetch(`${BASE_URL}/todos/${id}`, { method: "DELETE" })
             .then(() => fetchTodos())
             .catch(error => console.log(error));
     };
 
-    // 4. Limpiar todas las tareas
+    
     const handleClearAll = () => {
         fetch(`${BASE_URL}/users/${USERNAME}`, { method: "DELETE" })
             .then(() => fetch(`${BASE_URL}/users/${USERNAME}`, { method: "POST" }))
